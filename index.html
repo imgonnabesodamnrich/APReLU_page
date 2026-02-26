@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paper Notes: ResNet-APReLU for Mechanical Fault Diagnosis</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css">
+    
+    <!-- Safe MathJax for LaTeX rendering -->
+    <script>
+        MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] } };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        body { margin: 0; padding: 0; display: flex; min-height: 100vh; background-color: #fff; font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif; }
+        .sidebar { width: 280px; background-color: #f6f8fa; border-right: 1px solid #d0d7de; position: fixed; height: 100vh; overflow-y: auto; padding: 24px; box-sizing: border-box; top: 0; left: 0; z-index: 100; }
+        .sidebar h2 { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #24292f; }
+        .sidebar ul { list-style: none; padding: 0; margin: 0; }
+        .sidebar li { margin-bottom: 8px; }
+        .sidebar a { text-decoration: none; color: #57606a; font-size: 14px; display: block; padding: 4px 0; transition: color 0.2s; }
+        .sidebar a:hover { color: #0969da; text-decoration: underline; }
+        .sidebar .sub-menu { margin-left: 20px; margin-top: 4px; font-size: 13px; }
+        .main-content { margin-left: 280px; flex: 1; padding: 40px 60px; max-width: 1000px; }
+        html { scroll-behavior: smooth; }
+        div[align="center"] { text-align: center; margin: 20px 0; }
+        table { display: block; width: 100%; overflow: auto; }
+        @media (max-width: 900px) {
+            body { display: block; }
+            .sidebar { position: relative; width: 100%; height: auto; border-right: none; border-bottom: 1px solid #d0d7de; }
+            .main-content { margin-left: 0; padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="sidebar">
+        <h2>Contents</h2>
+        <ul>
+            <li><a href="#1-introduction-and-background">1. Introduction & Background</a></li>
+            <li><a href="#2-challenges-in-feature-learning">2. Challenges in Feature Learning</a></li>
+            <li>
+                <a href="#3-core-innovation-aprelu">3. Core Innovation: APReLU</a>
+                <ul class="sub-menu">
+                    <li><a href="#31-motivation-of-aprelu">3.1 Motivation of APReLU</a></li>
+                    <li><a href="#32-sub-network-and-adaptation">3.2 Sub-network Adaptation</a></li>
+                </ul>
+            </li>
+            <li><a href="#4-resnet-aprelu-architecture">4. ResNet-APReLU Architecture</a></li>
+            <li>
+                <a href="#5-experimental-analysis">5. Experimental Analysis</a>
+                <ul class="sub-menu">
+                    <li><a href="#51-planetary-gearbox-setup">5.1 Planetary Gearbox Setup</a></li>
+                    <li><a href="#52-comparative-results">5.2 Comparative Results</a></li>
+                    <li><a href="#53-feature-visualization">5.3 Feature Visualization</a></li>
+                </ul>
+            </li>
+            <li><a href="#6-conclusion">6. Conclusion</a></li>
+            <li><a href="#literature-source">Literature Source</a></li>
+        </ul>
+    </nav>
+
+    <main class="main-content markdown-body">
+        
+        <h1>[Paper Notes] Deep Residual Networks with APReLU for Mechanical Fault Diagnosis under Complex Conditions</h1>
+
+        <blockquote>
+            <p><strong>An Adaptive Deep Learning Framework for Mechanical Fault Diagnosis</strong></p>
+            <p><strong>Paper Title:</strong> <em>Deep Residual Networks With Adaptively Parametric Rectifier Linear Units for Fault Diagnosis</em></p>
+            <p><strong>Journal:</strong> <em>IEEE Transactions on Industrial Electronics (TIE)</em>, Vol. 68, No. 3, 2021</p>
+            <p><strong>DOI:</strong> <a href="https://doi.org/10.1109/TIE.2020.2972458">10.1109/TIE.2020.2972458</a></p>
+        </blockquote>
+
+        <p>
+            <a href="https://doi.org/10.1109/TIE.2020.2972458"><img src="https://img.shields.io/badge/DOI-10.1109/TIE.2020.2972458-blue.svg" alt="DOI"></a>
+            <a href="#"><img src="https://img.shields.io/badge/Status-Published-green.svg" alt="Status"></a>
+            <a href="#"><img src="https://img.shields.io/badge/Topic-Deep%20Learning-orange.svg" alt="Topic"></a>
+            <a href="#"><img src="https://img.shields.io/badge/Field-Fault%20Diagnosis-blueviolet.svg" alt="Field"></a>
+        </p>
+
+        <hr>
+
+        <h2 id="1-introduction-and-background">1. Introduction and Background</h2>
+        <p>In modern industrial systems, condition monitoring of rotating machinery (e.g., gearboxes, bearings) is crucial for ensuring production safety. With the development of deep learning, data-driven fault diagnosis methods are gradually replacing manual feature extraction. However, mechanical equipment in actual industrial environments often faces complex variable working conditions, such as frequent speed fluctuations and load switching. These factors cause the statistical properties of vibration signals to be highly non-stationary. This paper proposes a deep residual network model incorporating Adaptively Parametric Rectifier Linear Units (APReLU) to improve the feature discrimination accuracy under complex variable conditions.</p>
+
+        <h2 id="2-challenges-in-feature-learning">2. Feature Learning Challenges under Variable Conditions</h2>
+        <p>Under variable working conditions, mechanical fault diagnosis faces two core challenges:</p>
+        <ul>
+            <li><strong>Intra-class Dissimilarity</strong>: The vibration signal distributions of the same fault type may vary greatly in the time or frequency domain under different speeds or loads.</li>
+            <li><strong>Inter-class Similarity</strong>: Different types of faults (e.g., gear wear vs. bearing pitting) may exhibit highly similar vibration characteristics under specific conditions.</li>
+        </ul>
+        <p>Traditional deep learning models (like ResNet, CNN) use fixed non-linear activation functions (like ReLU), applying a uniform transformation to all input signals. This "one-size-fits-all" approach struggles to effectively separate highly confused signals in the feature space, limiting the flexibility of the model's decision boundaries.</p>
+
+        <div align="center">
+          <img width="70%" src="https://github.com/user-attachments/assets/08ae33d8-6522-432d-aaf1-64a3608ac809" />
+          <p><em>Fig 1. Comparison: (a) Traditional fixed transformation vs. (b) Proposed adaptive transformation</em></p>
+        </div>
+
+        <h2 id="3-core-innovation-aprelu">3. Core Innovation: APReLU Activation Function</h2>
+
+        <h3 id="31-motivation-of-aprelu">3.1 Motivation of APReLU</h3>
+        <p>To enhance the model's adaptability to different input signals, the Adaptively Parametric Rectifier Linear Unit (APReLU) was designed. Unlike traditional activation functions, the negative slope of APReLU is neither a preset constant nor a globally shared parameter, but a dynamically generated variable based on the current input sample.</p>
+
+        <h3 id="32-sub-network-and-adaptation">3.2 Sub-network Structure and Parameter Adaptation</h3>
+        <p>APReLU integrates a lightweight sub-network to achieve parameter adaptation. The specific process is as follows:</p>
+        <ol>
+            <li><strong>Global Information Extraction</strong>: The input feature map first goes through Global Average Pooling (GAP) to extract global spatial information of each channel.</li>
+            <li><strong>Dynamic Slope Prediction</strong>: The sub-network (consisting of Fully Connected layers and Sigmoid mapping) calculates a specific slope coefficient $\alpha$ for each input channel based on the extracted information.</li>
+            <li><strong>Non-linear Transformation</strong>: The model applies a non-linear mapping to the current sample according to the dynamically generated slope, achieving a "customized" feature transformation effect.</li>
+        </ol>
+
+        <h2 id="4-resnet-aprelu-architecture">4. ResNet-APReLU Architecture</h2>
+        <p>The model uses a Deep Residual Network (ResNet) as the backbone. The identity connection mechanism of ResNet effectively solves the vanishing gradient problem in deep neural networks. The paper embeds the APReLU activation function into each residual block (ResBlock). This integration allows the network to not only possess deep semantic abstraction capabilities but also perform dynamic gain adjustment and feature calibration for samples under variable conditions during each layer's feature transmission.</p>
+
+        <div align="center">
+          <img width="70%" src="https://github.com/user-attachments/assets/35ac8e48-bdac-4841-99d2-2f60aad2976b" />
+          <p><em>Fig 2. (a) APReLU structure (b) Improved ResBlock (c) Overall network architecture</em></p>
+        </div>
+
+        <h2 id="5-experimental-analysis">5. Experimental Analysis and Verification</h2>
+
+        <h3 id="51-planetary-gearbox-setup">5.1 Planetary Gearbox Experimental Design</h3>
+        <p>The study used a planetary gearbox dynamic simulation test rig for data acquisition. The experiment set up 8 different health states (including normal, tooth wear, root crack, etc.) tested under 9 combinations of 3 speeds and 3 loads. Additionally, additive Gaussian white noise of different intensities was added to the original signals to evaluate the model's robustness.</p>
+
+        <h3 id="52-comparative-results">5.2 Comparative Experimental Results</h3>
+        <p>ResNet-APReLU was compared with traditional ConvNet and ResNets using activation functions like Sigmoid, Tanh, ReLU, LReLU, and PReLU:</p>
+        <ul>
+            <li><strong>Accuracy Improvement</strong>: Under various Signal-to-Noise Ratios (5dB, 3dB, 1dB), ResNet-APReLU maintained the highest testing accuracy.</li>
+            <li><strong>Generalization Performance</strong>: Compared to fixed-slope models, the adaptive model exhibited stronger robustness when facing unseen working conditions.</li>
+        </ul>
+
+        <h3 id="53-feature-visualization">5.3 Feature Visualization Analysis</h3>
+        <p>The t-SNE algorithm was used to perform dimensionality reduction and visualization on the last layer's features. The results showed that ResNet-APReLU significantly widened the feature distance between different faults and compressed the feature distribution space of the same faults under different conditions, forming much more compact and clear clustering results.</p>
+
+        <div align="center">
+          <img width="90%" src="https://github.com/user-attachments/assets/b49a9f74-ebbc-466c-a70c-4c34675bb292" />
+          <p><em>Fig 3. t-SNE visualization comparison of different ResNet variants and the proposed method</em></p>
+        </div>
+
+        <h2 id="6-conclusion">6. Conclusion</h2>
+        <p>By introducing an adaptive activation mechanism into the residual structure, the proposed ResNet-APReLU model effectively solves the difficulty of feature discrimination of vibration signals under complex variable working conditions. Its excellent performance in planetary gearbox fault diagnosis reflects the advantage of dynamically adjusting non-linear transformation parameters for non-stationary industrial signals, providing a highly flexible neural network construction approach for intelligent industrial data analysis.</p>
+
+        <hr>
+
+        <h2 id="literature-source">Literature Source</h2>
+        <p><strong>Title:</strong> Deep Residual Networks With Adaptively Parametric Rectifier Linear Units for Fault Diagnosis</p>
+        <p><strong>Journal:</strong> IEEE Transactions on Industrial Electronics</p>
+        <p><strong>DOI:</strong> <a href="https://doi.org/10.1109/TIE.2020.2972458">10.1109/TIE.2020.2972458</a></p>
+
+    </main>
+
+</body>
+</html>
