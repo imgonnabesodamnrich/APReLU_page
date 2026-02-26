@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>論文ノート：適応型活性化関数を統合した深層残差ネットワーク(ResNet-APReLU)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css">
+    
+    <!-- Safe MathJax for LaTeX rendering -->
+    <script>
+        MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] } };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        body { margin: 0; padding: 0; display: flex; min-height: 100vh; background-color: #fff; font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif; }
+        .sidebar { width: 280px; background-color: #f6f8fa; border-right: 1px solid #d0d7de; position: fixed; height: 100vh; overflow-y: auto; padding: 24px; box-sizing: border-box; top: 0; left: 0; z-index: 100; }
+        .sidebar h2 { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #24292f; }
+        .sidebar ul { list-style: none; padding: 0; margin: 0; }
+        .sidebar li { margin-bottom: 8px; }
+        .sidebar a { text-decoration: none; color: #57606a; font-size: 14px; display: block; padding: 4px 0; transition: color 0.2s; }
+        .sidebar a:hover { color: #0969da; text-decoration: underline; }
+        .sidebar .sub-menu { margin-left: 20px; margin-top: 4px; font-size: 13px; }
+        .main-content { margin-left: 280px; flex: 1; padding: 40px 60px; max-width: 1000px; }
+        html { scroll-behavior: smooth; }
+        div[align="center"] { text-align: center; margin: 20px 0; }
+        table { display: block; width: 100%; overflow: auto; }
+        @media (max-width: 900px) {
+            body { display: block; }
+            .sidebar { position: relative; width: 100%; height: auto; border-right: none; border-bottom: 1px solid #d0d7de; }
+            .main-content { margin-left: 0; padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="sidebar">
+        <h2>目次</h2>
+        <ul>
+            <li><a href="#1-はじめにと背景">1. はじめにと背景</a></li>
+            <li><a href="#2-変動動作条件下における特徴学習の課題">2. 特徴学習の課題</a></li>
+            <li>
+                <a href="#3-核心的なイノベーションaprelu活性化関数">3. 核心的革新：APReLU</a>
+                <ul class="sub-menu">
+                    <li><a href="#31-apreluの設計動機">3.1 APReLUの設計動機</a></li>
+                    <li><a href="#32-サブネットワーク構造とパラメータの適応">3.2 パラメータの適応</a></li>
+                </ul>
+            </li>
+            <li><a href="#4-resnet-apreluの全体アーキテクチャ">4. ResNet-APReLUアーキテクチャ</a></li>
+            <li>
+                <a href="#5-実験分析と検証">5. 実験分析と検証</a>
+                <ul class="sub-menu">
+                    <li><a href="#51-遊星歯車装置の実験設計">5.1 遊星歯車の実験設計</a></li>
+                    <li><a href="#52-比較実験結果">5.2 比較実験結果</a></li>
+                    <li><a href="#53-特徴の可視化分析">5.3 特徴の可視化分析</a></li>
+                </ul>
+            </li>
+            <li><a href="#6-結論">6. 結論</a></li>
+            <li><a href="#参考文献">参考文献</a></li>
+        </ul>
+    </nav>
+
+    <main class="main-content markdown-body">
+        
+        <h1>【論文ノート】適応型活性化関数を統合した深層残差ネットワーク(ResNet-APReLU) —— 複雑な動作条件下の機械故障診断</h1>
+
+        <blockquote>
+            <p><strong>An Adaptive Deep Learning Framework for Mechanical Fault Diagnosis</strong></p>
+            <p><strong>Paper Title:</strong> <em>Deep Residual Networks With Adaptively Parametric Rectifier Linear Units for Fault Diagnosis</em></p>
+            <p><strong>Journal:</strong> <em>IEEE Transactions on Industrial Electronics (TIE)</em>, Vol. 68, No. 3, 2021</p>
+            <p><strong>DOI:</strong> <a href="https://doi.org/10.1109/TIE.2020.2972458">10.1109/TIE.2020.2972458</a></p>
+        </blockquote>
+
+        <p>
+            <a href="https://doi.org/10.1109/TIE.2020.2972458"><img src="https://img.shields.io/badge/DOI-10.1109/TIE.2020.2972458-blue.svg" alt="DOI"></a>
+            <a href="#"><img src="https://img.shields.io/badge/Status-Published-green.svg" alt="Status"></a>
+            <a href="#"><img src="https://img.shields.io/badge/Topic-Deep%20Learning-orange.svg" alt="Topic"></a>
+            <a href="#"><img src="https://img.shields.io/badge/Field-Fault%20Diagnosis-blueviolet.svg" alt="Field"></a>
+        </p>
+
+        <hr>
+
+        <h2 id="1-はじめにと背景">1. はじめにと背景</h2>
+        <p>現代の産業システムにおいて、回転機械（ギアボックス、ベアリングなど）の健全性監視は、生産の安全性を確保する上で決定的な役割を果たします。深層学習技術の発展に伴い、データ駆動型の故障診断手法が従来の手動特徴抽出に徐々に取って代わっています。しかし、実際の産業環境にある機械設備は、頻繁な速度変動や負荷の切り替えなど、複雑な動作条件の変化に直面することがよくあります。これらの要因により、振動信号の統計的特性は極めて強い非定常性を示します。本論文では、複雑な変動動作条件下での特徴判別精度を向上させることを目的とした、適応型パラメータ化正規化線形ユニット（APReLU）を統合した深層残差ネットワークモデルを提案しています。</p>
+
+        <h2 id="2-変動動作条件下における特徴学習の課題">2. 変動動作条件下における特徴学習の課題</h2>
+        <p>変動する動作条件下において、機械の故障診断は2つの中心的な課題に直面します：</p>
+        <ul>
+            <li><strong>クラス内非類似性</strong>：同じ故障タイプでも、速度や負荷が異なると、時間領域または周波数領域における振動信号の分布に大きな違いが生じる可能性があります。</li>
+            <li><strong>クラス間類似性</strong>：異なるタイプの故障（ギアの摩耗とベアリングのピッチングなど）が、特定の動作条件下で極めて類似した振動特性を示す場合があります。</li>
+        </ul>
+        <p>従来の深層学習モデル（ResNet、CNNなど）は、固定された非線形活性化関数（ReLUなど）を採用し、すべての入力信号に対して一律の非線形変換を適用します。このような「画一的」な処理では、特徴空間で高度に混同された信号を効果的に分離することが難しく、モデルの決定境界の柔軟性が制限されます。</p>
+
+        <div align="center">
+          <img width="70%" src="https://github.com/user-attachments/assets/08ae33d8-6522-432d-aaf1-64a3608ac809" />
+          <p><em>図1 比較図 (a) 従来の固定変換 (b) 提案された適応型変換</em></p>
+        </div>
+
+        <h2 id="3-核心的なイノベーションaprelu活性化関数">3. 核心的なイノベーション：APReLU 活性化関数</h2>
+
+        <h3 id="31-apreluの設計動機">3.1 APReLUの設計動機</h3>
+        <p>異なる入力信号に対するモデルの適応能力を高めるため、適応型パラメータ化正規化線形ユニット（APReLU）が設計されました。従来の活性化関数とは異なり、APReLUの負の半軸の傾きは、事前に設定された定数でも、グローバルに共有される学習パラメータでもなく、現在の入力サンプルに基づいて動的に生成される変数です。</p>
+
+        <h3 id="32-サブネットワーク構造とパラメータの適応">3.2 サブネットワーク構造とパラメータの適応</h3>
+        <p>APReLUは、パラメータの適応調整を実現するために軽量なサブネットワークを統合しています。具体的なプロセスは以下の通りです：</p>
+        <ol>
+            <li><strong>グローバル情報の抽出</strong>：入力特徴マップはまずGlobal Average Pooling（GAP）操作を経て、各チャネルのグローバルな空間情報を抽出します。</li>
+            <li><strong>動的な傾きの予測</strong>：サブネットワーク（全結合層とSigmoidマッピングを含む）は、抽出された情報に基づいて、各入力チャネルに対応する傾き係数 $\alpha$ を計算します。</li>
+            <li><strong>非線形変換</strong>：モデルは、生成された動的な傾きに従って現在のサンプルに対して非線形マッピングを実行し、「オーダーメイド」の特徴変換効果を実現します。</li>
+        </ol>
+
+        <h2 id="4-resnet-apreluの全体アーキテクチャ">4. ResNet-APReLUの全体アーキテクチャ</h2>
+        <p>モデルは深層残差ネットワーク（ResNet）をバックボーンとして使用しています。ResNetの恒等接続メカニズムは、深層ニューラルネットワークにおける勾配消失問題を効果的に解決します。論文では、APReLU活性化関数を各残差ブロック（ResBlock）に組み込んでいます。この統合により、ネットワークは深いセマンティックな抽象化能力を備えるだけでなく、各層の特徴伝達において、変動動作条件サンプルに対して動的なゲイン調整と特徴補正を行うことができます。</p>
+
+        <div align="center">
+          <img width="70%" src="https://github.com/user-attachments/assets/35ac8e48-bdac-4841-99d2-2f60aad2976b" />
+          <p><em>図2 (a) APReLUの構造 (b) 改良されたResBlock (c) 全体ネットワークアーキテクチャ</em></p>
+        </div>
+
+        <h2 id="5-実験分析と検証">5. 実験分析と検証</h2>
+
+        <h3 id="51-遊星歯車装置の実験設計">5.1 遊星歯車装置の実験設計</h3>
+        <p>論文では、データ収集のために遊星歯車装置の動的シミュレーションテストベンチを使用しました。実験では、8つの異なる健全状態（正常、歯面摩耗、歯元亀裂など）を設定し、3つの速度と3つの負荷の組み合わせの下でテストを行いました。また、モデルの堅牢性を評価するため、元の信号に異なる強度のガウスホワイトノイズを加算しました。</p>
+
+        <h3 id="52-比較実験結果">5.2 比較実験結果</h3>
+        <p>実験では、ResNet-APReLUを従来のConvNet、およびSigmoid、Tanh、ReLU、LReLU、PReLUなどの活性化関数を採用したResNetと比較しました：</p>
+        <ul>
+            <li><strong>精度の向上</strong>：様々なSN比（5dB、3dB、1dB）の環境下において、ResNet-APReLUのテスト精度は一貫して最高を維持しました。</li>
+            <li><strong>汎化性能</strong>：固定の傾きを採用したモデルと比較して、適応型モデルは未知の動作条件に直面した際により強い堅牢性を示しました。</li>
+        </ul>
+
+        <h3 id="53-特徴の可視化分析">5.3 特徴の可視化分析</h3>
+        <p>t-SNEアルゴリズムを使用して、モデルの最終層の特徴の次元削減と可視化を行いました。その結果、ResNet-APReLUは異なる故障間の特徴距離を顕著に広げ、同じ故障の異なる動作条件下での特徴分布空間を圧縮し、よりコンパクトで明確なクラスタリング結果を形成できることが示されました。</p>
+
+        <div align="center">
+          <img width="90%" src="https://github.com/user-attachments/assets/b49a9f74-ebbc-466c-a70c-4c34675bb292" />
+          <p><em>図3 異なるResNetバリアントと提案手法の t-SNE 可視化比較</em></p>
+        </div>
+
+        <h2 id="6-結論">6. 結論</h2>
+        <p>本論文で提案されたResNet-APReLUモデルは、残差構造に適応型活性化メカニズムを導入することにより、複雑な変動動作条件下における振動信号の特徴判別の難しさを効果的に解決しました。この方法は、遊星歯車装置の故障診断タスクにおいて優れた性能を示し、非定常な産業信号を処理する際の非線形変換パラメータの動的調整の利点を反映しており、産業ビッグデータのインテリジェント分析に、より柔軟性の高いニューラルネットワーク構築アプローチを提供します。</p>
+
+        <hr>
+
+        <h2 id="参考文献">参考文献</h2>
+        <p><strong>タイトル：</strong> Deep Residual Networks With Adaptively Parametric Rectifier Linear Units for Fault Diagnosis</p>
+        <p><strong>ジャーナル：</strong> IEEE Transactions on Industrial Electronics</p>
+        <p><strong>DOI：</strong> <a href="https://doi.org/10.1109/TIE.2020.2972458">10.1109/TIE.2020.2972458</a></p>
+
+    </main>
+
+</body>
+</html>
